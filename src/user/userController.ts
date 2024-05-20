@@ -51,10 +51,33 @@ export const createUser = async (
       expiresIn: "7d",
     });
 
-    res.json({ access_token: token });
+    res.status(201).json({ access_token: token });
   } catch (err) {
     return next(createHttpError(500, "Error while signing the jwt token!"));
   }
 };
+
+export const loginUser = async(req:Request, res:Response, next:NextFunction) => {
+
+    const {email, password} = req.body ;
+    if(!email || !password){
+      return next(createHttpError(400, "All fields are required!")) ;
+    }
+
+    const user = await userModel.findOne({email}) ;
+    if(!user){
+      return next(createHttpError(404, 'User not found!')); 
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password) ;
+    if(!isMatch){
+        return next(createHttpError(404, 'Invalid credentials!')) ;
+    }  
+    const token = sign({sub: user._id}, config.jwtSecret as string) ;
+
+    return res.status(201).json({
+      token
+    }) ;
+}
 
 // eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2NjRiNTBmNmE2NDg4Nzk1YzE2YjIwNTAiLCJpYXQiOjE3MTYyMTE5NTgsImV4cCI6MTcxNjgxNjc1OH0.a8KJcDwispzQC5k8RNbGI-X3AoCsdofLyRh4SXPZ3wo
