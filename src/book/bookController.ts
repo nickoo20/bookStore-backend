@@ -5,6 +5,10 @@ import createHttpError from "http-errors";
 import bookModel from "./bookModel";
 import fs from 'fs' ;
 
+export interface AuthRequest extends Request{
+    userId : string,
+};
+
 export const createBook = async (
   req: Request,
   res: Response,
@@ -49,17 +53,12 @@ export const createBook = async (
       }
     );
 
-    console.log("bookFileUploadResult: ", bookFileUploadResult);
-    console.log("uplodaresult : ", uploadResult);
-
-    // @ts-ignore
-    console.log('userId ,', req.userId) ; 
-
+    const _req=req as AuthRequest ;
 
     const newBook = await bookModel.create({
         title,
         genre,
-        author:'664b50f6a6488795c16b2050',
+        author: _req.userId,
         coverImage:uploadResult.secure_url,
         file:bookFileUploadResult.secure_url,
     }) ;
