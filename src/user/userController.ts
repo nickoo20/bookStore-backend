@@ -4,6 +4,7 @@ import userModel from "./userModel";
 import bcrypt from "bcrypt";
 import { sign } from "jsonwebtoken";
 import { config } from "../config/config";
+import { User } from "./userTypes";
 
 export const createUser = async (
   req: Request,
@@ -17,24 +18,43 @@ export const createUser = async (
     const error = createHttpError(400, "All fields are required!");
     return next(error);
   }
-  const user = await userModel.findOne({ email });
-  if (user) {
-    const error = createHttpError(400, "User already exist with this email !");
-    return next(error);
+  try {
+    const user = await userModel.findOne({ email });
+    if (user) {
+      const error = createHttpError(
+        400,
+        "User already exist with this email !"
+      );
+      return next(error);
+    }
+  } catch (err) {
+    return next(createHttpError(500, "Error while getting user!"));
   }
 
-  const hashedPassword = await bcrypt.hash(password, 10) ;
-  const newUser = await userModel.create({
-    name,
-    email,
-    password: hashedPassword,
-  });
+  const hashedPassword = await bcrypt.hash(password, 10);
 
-  // Token generation
-  const token = sign({ sub: newUser._id }, config.jwtSecret as string,{expiresIn:'7d'});
+  let newUser: User;
 
+  try {
+    newUser = await userModel.create({
+      name,
+      email,
+      password: hashedPassword,
+    });
+  } catch (err) {
+    return next(createHttpError(500, "Error while creating user!"));
+  }
 
-  res.json({access_token:token}) ;  
+  try {
+    // Token generation
+    const token = sign({ sub: newUser._id }, config.jwtSecret as string, {
+      expiresIn: "7d",
+    });
+
+    res.json({ access_token: token });
+  } catch (err) {
+    return next(createHttpError(500, "Error while signing the jwt token!"));
+  }
 };
 
 // eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2NjRiNTBmNmE2NDg4Nzk1YzE2YjIwNTAiLCJpYXQiOjE3MTYyMTE5NTgsImV4cCI6MTcxNjgxNjc1OH0.a8KJcDwispzQC5k8RNbGI-X3AoCsdofLyRh4SXPZ3wo
