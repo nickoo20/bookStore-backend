@@ -33,6 +33,7 @@
   "dependencies": {
     "@types/dotenv": "^8.2.0",
     "@types/http-errors": "^2.0.4",
+    "cloudinary": "^2.2.0",
     "cookie-parser": "^1.4.6",
     "dotenv": "^16.4.5",
     "http-errors": "^2.0.0",
